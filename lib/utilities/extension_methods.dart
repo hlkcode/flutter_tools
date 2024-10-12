@@ -11,6 +11,12 @@ extension TimeOfDayExtensions on TimeOfDay {
     return TimeOfDay.fromDateTime(
         DateTime(now.year, now.month, now.day, hour, minute).toUtc());
   }
+
+  String to24hours() {
+    final hour = this.hour.toString().padLeft(2, "0");
+    final min = minute.toString().padLeft(2, "0");
+    return "$hour:$min";
+  }
 }
 
 extension StringExtensions on String {
