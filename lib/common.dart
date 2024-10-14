@@ -25,8 +25,9 @@ Map<String, String> get headers {
 }
 
 bool isLoggedIn() {
-  final String token =
-      GetStorage().hasData('user') ? user[Constants.TOKEN_KEY] : '';
+  final uData = GetStorage().read(Constants.USER_DATA);
+  if (uData == null) return false;
+  final token = uData[Constants.TOKEN_KEY] ?? '';
   return !GetUtils.isNullOrBlank(token)! && !JwtDecoder.isExpired(token);
 }
 
