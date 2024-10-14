@@ -24,10 +24,11 @@ Map<String, String> get headers {
   return getHeaders(token ?? '');
 }
 
-bool isLoggedIn() {
+bool isLoggedIn({bool logToken = false}) {
   final uData = GetStorage().read(Constants.USER_DATA);
   if (uData == null) return false;
   final token = uData[Constants.TOKEN_KEY] ?? '';
+  if (logToken) logInfo('isLoggedIn: token => $token');
   return !GetUtils.isNullOrBlank(token)! && !JwtDecoder.isExpired(token);
 }
 
