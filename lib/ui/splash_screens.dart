@@ -38,10 +38,10 @@ Future<void> _pageToGoToWhenDone(Widget page,
     [int splashDuration = 5, Function? toExecute]) async {
   if (toExecute != null) {
     await toExecute();
-    Get.off(page);
+    Get.off(() => page);
   } else {
     await Future.delayed(
-        Duration(seconds: splashDuration), () => Get.off(page));
+        Duration(seconds: splashDuration), () => Get.off(() => page));
   }
 }
 
