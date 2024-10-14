@@ -76,6 +76,9 @@ class SimpleLogoTextSplashscreen extends StatelessWidget {
     final _titleColor = titleColor ?? Get.textTheme.headlineLarge!.color;
 
     _pageToGoToWhenDone(nextPage, splashDuration, toRunWhilstLoading);
+
+    var showText = !GetUtils.isNullOrBlank(appName)!;
+
     return Container(
       constraints: const BoxConstraints.expand(),
       color: backgroundColor,
@@ -86,15 +89,15 @@ class SimpleLogoTextSplashscreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
+                if (!showText) SizedBox(height: getDisplayHeight() * 0.01),
                 Image.asset(
                   imageUrl,
                   width: logoSize ?? getDisplayWidth() * 0.32,
                   height: logoSize ?? getDisplayHeight() * 0.2,
                   fit: BoxFit.contain,
                 ),
-                if (!GetUtils.isNullOrBlank(appName)!)
-                  SizedBox(height: getDisplayHeight() * 0.01),
-                if (!GetUtils.isNullOrBlank(appName)!)
+                if (showText) SizedBox(height: getDisplayHeight() * 0.01),
+                if (showText)
                   Text(
                     appName!,
                     style: Get.textTheme.headlineLarge!.copyWith(
