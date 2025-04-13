@@ -23,6 +23,7 @@ dependencies:
   get: ^4.3.8
   device_info_plus: ^11.3.3
   permission_handler: ^12.0.0
+#  splash_master: ^0.0.2 # a more complex or custom version of flutter_native_splash
 
 dev_dependencies:
   flutter_test:
