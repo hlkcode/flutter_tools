@@ -13,6 +13,7 @@ class SimpleTopTabsPage extends StatefulWidget {
   final String tabsPageTile;
   final List<TopTabItem> tabItems;
   final Widget? drawer;
+  final Widget? floatingActionButton;
 
   final String? backgroundImageAssetPath;
   final Color backgroundColor;
@@ -22,33 +23,35 @@ class SimpleTopTabsPage extends StatefulWidget {
   final AppBar? appBar;
   final Function(int)? onPageChanged;
 
-  const SimpleTopTabsPage.noDrawer({
-    Key? key,
-    this.tabsPageTile = '',
-    required this.tabItems,
-    this.drawer,
-    this.backgroundColor = Colors.white,
-    this.selectedColor = Colors.blueAccent,
-    this.deselectedColor = Colors.black38,
-    this.appBarActionIcons,
-    this.appBar,
-    this.onPageChanged,
-    this.backgroundImageAssetPath,
-  }) : super(key: key);
+  const SimpleTopTabsPage.noDrawer(
+      {Key? key,
+      this.tabsPageTile = '',
+      required this.tabItems,
+      this.drawer,
+      this.backgroundColor = Colors.white,
+      this.selectedColor = Colors.blueAccent,
+      this.deselectedColor = Colors.black38,
+      this.appBarActionIcons,
+      this.appBar,
+      this.onPageChanged,
+      this.backgroundImageAssetPath,
+      this.floatingActionButton})
+      : super(key: key);
 
-  const SimpleTopTabsPage.withDrawer({
-    Key? key,
-    this.tabsPageTile = '',
-    required this.tabItems,
-    required this.drawer,
-    this.backgroundColor = Colors.white,
-    this.selectedColor = Colors.blueAccent,
-    this.deselectedColor = Colors.black38,
-    this.appBarActionIcons,
-    this.appBar,
-    this.onPageChanged,
-    this.backgroundImageAssetPath,
-  }) : super(key: key);
+  const SimpleTopTabsPage.withDrawer(
+      {Key? key,
+      this.tabsPageTile = '',
+      required this.tabItems,
+      required this.drawer,
+      this.backgroundColor = Colors.white,
+      this.selectedColor = Colors.blueAccent,
+      this.deselectedColor = Colors.black38,
+      this.appBarActionIcons,
+      this.appBar,
+      this.onPageChanged,
+      this.backgroundImageAssetPath,
+      this.floatingActionButton})
+      : super(key: key);
 
   @override
   _SimpleTopTabsPageState createState() => _SimpleTopTabsPageState();
@@ -105,6 +108,7 @@ class _SimpleTopTabsPageState extends State<SimpleTopTabsPage>
         controller: _controller,
         children: widget.tabItems.map((item) => item.widget).toList(),
       ),
+      floatingActionButton: widget.floatingActionButton,
       drawer: widget.drawer,
     );
 
@@ -134,6 +138,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
   final String tabsPageTile;
   final List<BottomTabItem> tabItems;
   final Widget? drawer;
+  final Widget? floatingActionButton;
   final Color backgroundColor;
   final Color selectedColor;
   final Color deselectedColor;
@@ -153,6 +158,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
       this.bottomTabsType = SimpleBottomTabsType.rawOrDefault,
       this.appBarActionIcons,
       this.appBar,
+      this.floatingActionButton,
       this.onPageChanged})
       : super(key: key);
 
@@ -167,6 +173,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
       this.bottomTabsType = SimpleBottomTabsType.rawOrDefault,
       this.appBarActionIcons,
       this.appBar,
+      this.floatingActionButton,
       this.onPageChanged})
       : super(key: key);
 
@@ -190,6 +197,7 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
             actions: widget.appBarActionIcons,
           ),
       body: widget.tabItems[_currentTabIndex].widget,
+      floatingActionButton: widget.floatingActionButton,
       bottomNavigationBar: _getBottomNavigationBar(widget.bottomTabsType),
       drawer: widget.drawer,
     );
