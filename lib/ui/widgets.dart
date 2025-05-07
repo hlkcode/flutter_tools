@@ -1,6 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_tools/utilities/extension_methods.dart';
 import 'package:get/get.dart';
 
 import '../common.dart';
@@ -24,7 +26,7 @@ class SimpleTopTabsPage extends StatefulWidget {
   final Function(int)? onPageChanged;
 
   const SimpleTopTabsPage.noDrawer(
-      {Key? key,
+      {super.key,
       this.tabsPageTile = '',
       required this.tabItems,
       this.drawer,
@@ -35,11 +37,10 @@ class SimpleTopTabsPage extends StatefulWidget {
       this.appBar,
       this.onPageChanged,
       this.backgroundImageAssetPath,
-      this.floatingActionButton})
-      : super(key: key);
+      this.floatingActionButton});
 
   const SimpleTopTabsPage.withDrawer(
-      {Key? key,
+      {super.key,
       this.tabsPageTile = '',
       required this.tabItems,
       required this.drawer,
@@ -50,8 +51,7 @@ class SimpleTopTabsPage extends StatefulWidget {
       this.appBar,
       this.onPageChanged,
       this.backgroundImageAssetPath,
-      this.floatingActionButton})
-      : super(key: key);
+      this.floatingActionButton});
 
   @override
   _SimpleTopTabsPageState createState() => _SimpleTopTabsPageState();
@@ -137,6 +137,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
   static const String routeName = 'SimpleBottomTabsPage';
   final String tabsPageTile;
   final List<BottomTabItem> tabItems;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
   final Widget? drawer;
   final Widget? floatingActionButton;
   final Color backgroundColor;
@@ -145,12 +146,17 @@ class SimpleBottomTabsPage extends StatefulWidget {
   final SimpleBottomTabsType bottomTabsType;
   final List<Widget>? appBarActionIcons;
   final AppBar? appBar;
+  final double iconSize;
+  final double notchMargin;
+  final Clip clipBehavior;
   final Function(int)? onPageChanged;
 
   const SimpleBottomTabsPage.noDrawer(
-      {Key? key,
+      {super.key,
       this.tabsPageTile = '',
+      this.clipBehavior = Clip.antiAlias,
       required this.tabItems,
+      this.notchMargin = 10,
       this.drawer,
       this.backgroundColor = Colors.white,
       this.selectedColor = Colors.blueAccent,
@@ -159,12 +165,15 @@ class SimpleBottomTabsPage extends StatefulWidget {
       this.appBarActionIcons,
       this.appBar,
       this.floatingActionButton,
-      this.onPageChanged})
-      : super(key: key);
+      this.floatingActionButtonLocation,
+      this.onPageChanged,
+      this.iconSize = 24.0});
 
   const SimpleBottomTabsPage.withDrawer(
-      {Key? key,
+      {super.key,
       this.tabsPageTile = '',
+      this.notchMargin = 10,
+      this.clipBehavior = Clip.antiAlias,
       required this.tabItems,
       required this.drawer,
       this.backgroundColor = Colors.white,
@@ -174,8 +183,9 @@ class SimpleBottomTabsPage extends StatefulWidget {
       this.appBarActionIcons,
       this.appBar,
       this.floatingActionButton,
-      this.onPageChanged})
-      : super(key: key);
+      this.floatingActionButtonLocation,
+      this.iconSize = 24.0,
+      this.onPageChanged});
 
   @override
   _SimpleBottomTabsPageState createState() => _SimpleBottomTabsPageState();
@@ -183,6 +193,27 @@ class SimpleBottomTabsPage extends StatefulWidget {
 
 class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
   int _currentTabIndex = 0;
+  bool hasMiddleButton = false;
+
+  late final int mid;
+  // final List<Widget> widgetList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final length = widget.tabItems.length;
+    mid = (length / 2).toInt();
+
+    hasMiddleButton =
+        widget.bottomTabsType == SimpleBottomTabsType.rawOrDefault &&
+            widget.floatingActionButtonLocation
+                .toString()
+                .containsIgnoreCase('centerDocked');
+
+    if (hasMiddleButton) {
+      assert(length == 4);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +229,17 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
           ),
       body: widget.tabItems[_currentTabIndex].widget,
       floatingActionButton: widget.floatingActionButton,
-      bottomNavigationBar: _getBottomNavigationBar(widget.bottomTabsType),
+      floatingActionButtonLocation: widget.floatingActionButtonLocation,
+      bottomNavigationBar: hasMiddleButton
+          ? BottomAppBar(
+              // color: Colors.white,
+              shape: CircularNotchedRectangle(),
+              clipBehavior: widget.clipBehavior,
+              notchMargin: widget.notchMargin,
+              padding: EdgeInsets.zero,
+              child: _getBottomNavigationBar(widget.bottomTabsType),
+            )
+          : _getBottomNavigationBar(widget.bottomTabsType),
       drawer: widget.drawer,
     );
   }
@@ -221,7 +262,6 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
           deselectedColor: widget.deselectedColor,
           selectedColor: widget.selectedColor,
           currentTabIndex: _currentTabIndex,
-          itemCount: widget.tabItems.length,
           onItemTap: refreshIndex,
           iconDataList: widget.tabItems.map((e) => e.icon.icon!).toList());
     } else if (tabsType == SimpleBottomTabsType.bottomSelection) {
@@ -231,7 +271,6 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
           deselectedColor: widget.deselectedColor,
           selectedColor: widget.selectedColor,
           currentTabIndex: _currentTabIndex,
-          itemCount: widget.tabItems.length,
           onItemTap: refreshIndex,
           iconDataList: widget.tabItems.map((e) => e.icon.icon!).toList());
     } else if (tabsType == SimpleBottomTabsType.roundedIcon) {
@@ -241,7 +280,6 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
           deselectedColor: widget.deselectedColor,
           selectedColor: widget.selectedColor,
           currentTabIndex: _currentTabIndex,
-          itemCount: widget.tabItems.length,
           onItemTap: refreshIndex,
           iconDataList: widget.tabItems.map((e) => e.icon.icon!).toList());
     } else if (tabsType == SimpleBottomTabsType.roundedIconAndText) {
@@ -252,7 +290,6 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
           deselectedColor: widget.deselectedColor,
           selectedColor: widget.selectedColor,
           currentTabIndex: _currentTabIndex,
-          itemCount: widget.tabItems.length,
           onItemTap: refreshIndex,
           iconDataList: widget.tabItems.map((e) => e.icon.icon!).toList());
     } else {
@@ -262,17 +299,69 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
         unselectedItemColor: widget.deselectedColor,
         selectedItemColor: widget.selectedColor,
         currentIndex: _currentTabIndex,
+        iconSize: widget.iconSize,
         // type: BottomNavigationBarType.shifting,
         items: widget.tabItems
-            .map(
-              (item) => BottomNavigationBarItem(
-                icon: item.icon,
-                label: item.tabTitle,
-                backgroundColor: widget.backgroundColor,
-              ),
-            )
+            .map((item) => BottomNavigationBarItem(
+                  icon: item.icon,
+                  label: item.tabTitle,
+                  backgroundColor: widget.backgroundColor,
+                ))
             .toList(),
       );
+
+      if (hasMiddleButton) {
+        final List<Widget> widgetList = [];
+        for (int index = 0; index < widget.tabItems.length; index++) {
+          var item = widget.tabItems[index];
+          var isSelected = index == _currentTabIndex;
+          var color =
+              isSelected ? widget.selectedColor : widget.deselectedColor;
+          // null to use default
+          var textSize = isSelected ? 15.0 : null;
+          var iconSize = isSelected ? widget.iconSize : null;
+          var clickable = InkWell(
+            onTap: () => refreshIndex(index),
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  item.icon.icon,
+                  size: iconSize,
+                  color: color,
+                ),
+                // verticalSpace(0.01),
+                Text(
+                  limitedWord(item.tabTitle, 8),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: textSize,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          widgetList.add(clickable);
+
+          if (index == (mid - 1)) widgetList.add(horizontalSpace(0.04));
+        }
+        mBottomBar = AnimatedContainer(
+          duration: const Duration(milliseconds: 1500),
+          curve: Curves.fastLinearToSlowEaseIn,
+          color: widget.backgroundColor,
+          alignment: Alignment.center,
+          // padding: EdgeInsets.symmetric(vertical: 6),
+          // margin: EdgeInsets.all(6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: widgetList,
+          ),
+        );
+      }
     }
     return mBottomBar;
   }
@@ -280,22 +369,18 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
 
 class _TopBottomNavBar extends StatelessWidget {
   const _TopBottomNavBar(
-      {Key? key,
-      required this.backgroundColor,
+      {required this.backgroundColor,
       required this.selectedColor,
       required this.deselectedColor,
       required this.currentTabIndex,
       required this.isForTop,
-      required this.itemCount,
       required this.onItemTap,
-      required this.iconDataList})
-      : super(key: key);
+      required this.iconDataList});
 
   final Color backgroundColor;
   final Color selectedColor;
   final Color deselectedColor;
   final int currentTabIndex;
-  final int itemCount;
   final bool isForTop;
   final Function(int position) onItemTap;
   final List<IconData> iconDataList;
@@ -318,89 +403,152 @@ class _TopBottomNavBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(50),
             )
           : null,
-      child: ListView.builder(
-        itemCount: itemCount,
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: getWidth(.024)),
-        itemBuilder: (context, index) => InkWell(
-          onTap: () => onItemTap(index),
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (!isForTop) SizedBox(height: getWidth(.014)),
-              if (!isForTop)
-                Icon(
-                  iconDataList[index],
-                  size: getWidth(.076),
-                  color: index == currentTabIndex
-                      ? selectedColor
-                      : deselectedColor,
-                ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 1500),
-                curve: Curves.fastLinearToSlowEaseIn,
-                margin: EdgeInsets.only(
-                  bottom: isForTop
-                      ? index == currentTabIndex
-                          ? 0
-                          : getWidth(.029)
-                      : 0,
-                  right: getWidth(.0422),
-                  left: getWidth(.0422),
-                  top: !isForTop
-                      ? index == currentTabIndex
-                          ? 0
-                          : getWidth(.029)
-                      : 0,
-                ),
-                width: isForTop ? getWidth(.128) : getWidth(.153),
-                height: index == currentTabIndex ? getWidth(.014) : 0,
-                decoration: BoxDecoration(
-                  color: selectedColor,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(isForTop ? 10 : 0),
-                    top: Radius.circular(!isForTop ? 20 : 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: iconDataList.mapIndexed((index, element) {
+          var clickable = InkWell(
+            onTap: () => onItemTap(index),
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (!isForTop) SizedBox(height: getWidth(.014)),
+                if (!isForTop)
+                  Icon(
+                    iconDataList[index],
+                    size: getWidth(.076),
+                    color: index == currentTabIndex
+                        ? selectedColor
+                        : deselectedColor,
+                  ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 1500),
+                  curve: Curves.fastLinearToSlowEaseIn,
+                  margin: EdgeInsets.only(
+                    bottom: isForTop
+                        ? index == currentTabIndex
+                            ? 0
+                            : getWidth(.029)
+                        : 0,
+                    right: getWidth(.0422),
+                    left: getWidth(.0422),
+                    top: !isForTop
+                        ? index == currentTabIndex
+                            ? 0
+                            : getWidth(.029)
+                        : 0,
+                  ),
+                  width: isForTop ? getWidth(.128) : getWidth(.153),
+                  height: index == currentTabIndex ? getWidth(.014) : 0,
+                  decoration: BoxDecoration(
+                    color: selectedColor,
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(isForTop ? 10 : 0),
+                      top: Radius.circular(!isForTop ? 20 : 0),
+                    ),
                   ),
                 ),
-              ),
-              if (isForTop)
-                Icon(
-                  iconDataList[index],
-                  size: getWidth(.076),
-                  color: index == currentTabIndex
-                      ? selectedColor
-                      : deselectedColor,
-                ),
-              if (isForTop) SizedBox(height: getWidth(.03)),
-            ],
-          ),
-        ),
+                if (isForTop)
+                  Icon(
+                    iconDataList[index],
+                    size: getWidth(.076),
+                    color: index == currentTabIndex
+                        ? selectedColor
+                        : deselectedColor,
+                  ),
+                if (isForTop) SizedBox(height: getWidth(.03)),
+              ],
+            ),
+          );
+
+          return clickable;
+        }).toList(),
       ),
     );
   }
+
+  // ListView.builder(
+  // itemCount: iconDataList.length,
+  // scrollDirection: Axis.horizontal,
+  // padding: EdgeInsets.symmetric(horizontal: getWidth(.024)),
+  // itemBuilder: (context, index) {
+  // var clickable = InkWell(
+  // onTap: () => onItemTap(index),
+  // splashColor: Colors.transparent,
+  // highlightColor: Colors.transparent,
+  // child: Column(
+  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // children: [
+  // if (!isForTop) SizedBox(height: getWidth(.014)),
+  // if (!isForTop)
+  // Icon(
+  // iconDataList[index],
+  // size: getWidth(.076),
+  // color: index == currentTabIndex
+  // ? selectedColor
+  //     : deselectedColor,
+  // ),
+  // AnimatedContainer(
+  // duration: const Duration(milliseconds: 1500),
+  // curve: Curves.fastLinearToSlowEaseIn,
+  // margin: EdgeInsets.only(
+  // bottom: isForTop
+  // ? index == currentTabIndex
+  // ? 0
+  //     : getWidth(.029)
+  //     : 0,
+  // right: getWidth(.0422),
+  // left: getWidth(.0422),
+  // top: !isForTop
+  // ? index == currentTabIndex
+  // ? 0
+  //     : getWidth(.029)
+  //     : 0,
+  // ),
+  // width: isForTop ? getWidth(.128) : getWidth(.153),
+  // height: index == currentTabIndex ? getWidth(.014) : 0,
+  // decoration: BoxDecoration(
+  // color: selectedColor,
+  // borderRadius: BorderRadius.vertical(
+  // bottom: Radius.circular(isForTop ? 10 : 0),
+  // top: Radius.circular(!isForTop ? 20 : 0),
+  // ),
+  // ),
+  // ),
+  // if (isForTop)
+  // Icon(
+  // iconDataList[index],
+  // size: getWidth(.076),
+  // color: index == currentTabIndex
+  // ? selectedColor
+  //     : deselectedColor,
+  // ),
+  // if (isForTop) SizedBox(height: getWidth(.03)),
+  // ],
+  // ),
+  // );
+  // return clickable;
+  // },
+  // )
+  //
 }
 
 class _RoundNavBar extends StatelessWidget {
   const _RoundNavBar(
-      {Key? key,
-      required this.backgroundColor,
+      {required this.backgroundColor,
       required this.selectedColor,
       required this.deselectedColor,
       required this.currentTabIndex,
       required this.isWithText,
-      required this.itemCount,
       required this.onItemTap,
       required this.iconDataList,
-      this.titleList})
-      : super(key: key);
+      this.titleList});
 
   final Color backgroundColor;
   final Color selectedColor;
   final Color deselectedColor;
   final int currentTabIndex;
-  final int itemCount;
   final bool isWithText;
   final Function(int position) onItemTap;
   final List<IconData> iconDataList;
@@ -424,7 +572,7 @@ class _RoundNavBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(50),
       ),
       child: ListView.builder(
-        itemCount: itemCount,
+        itemCount: iconDataList.length,
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: getWidth(.024)),
         itemBuilder: (context, index) => InkWell(
