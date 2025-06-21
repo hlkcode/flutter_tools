@@ -1,5 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+extension NumberExtensions on num {
+  String toMoney([String symbol = '', String pattern = '#,##0.00']) => symbol
+          .isEmpty
+      ? '$symbol${NumberFormat(pattern, Platform.localeName).format(this)}'
+      : '$symbol ${NumberFormat(pattern, Platform.localeName).format(this)}';
+}
 
 extension DurationExtensions on Duration {
   String toFormattedString() => '$this'.split('.').first.padLeft(8, '0');

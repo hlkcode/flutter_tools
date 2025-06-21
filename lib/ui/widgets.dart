@@ -150,6 +150,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
   final double notchMargin;
   final Clip clipBehavior;
   final Function(int)? onPageChanged;
+  final bool showDefaultAppBar;
 
   const SimpleBottomTabsPage.noDrawer(
       {super.key,
@@ -158,6 +159,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
       required this.tabItems,
       this.notchMargin = 10,
       this.drawer,
+      this.showDefaultAppBar = false,
       this.backgroundColor = Colors.white,
       this.selectedColor = Colors.blueAccent,
       this.deselectedColor = Colors.black38,
@@ -174,6 +176,7 @@ class SimpleBottomTabsPage extends StatefulWidget {
       this.tabsPageTile = '',
       this.notchMargin = 10,
       this.clipBehavior = Clip.antiAlias,
+      this.showDefaultAppBar = false,
       required this.tabItems,
       required this.drawer,
       this.backgroundColor = Colors.white,
@@ -219,14 +222,16 @@ class _SimpleBottomTabsPageState extends State<SimpleBottomTabsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: widget.appBar ??
-          AppBar(
-            title: Text(
-              GetUtils.isNullOrBlank(widget.tabsPageTile)!
-                  ? widget.tabItems[_currentTabIndex].tabTitle
-                  : widget.tabsPageTile,
-            ),
-            actions: widget.appBarActionIcons,
-          ),
+          (widget.showDefaultAppBar
+              ? AppBar(
+                  title: Text(
+                    GetUtils.isNullOrBlank(widget.tabsPageTile)!
+                        ? widget.tabItems[_currentTabIndex].tabTitle
+                        : widget.tabsPageTile,
+                  ),
+                  actions: widget.appBarActionIcons,
+                )
+              : null),
       body: widget.tabItems[_currentTabIndex].widget,
       floatingActionButton: widget.floatingActionButton,
       floatingActionButtonLocation: widget.floatingActionButtonLocation,
