@@ -9,11 +9,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '/tools_models.dart';
 import '../common.dart';
 import '../ui/widgets.dart';
+
+String? requiredValidator(String? text) =>
+    (text == null || text.isEmpty) ? 'Field is required' : null;
+
+String? phoneNumberValidator(String? text) =>
+    GetUtils.isPhoneNumber(getString(text)) ? null : 'Invalid Phone Number';
+
+String? emailValidator(String? text) =>
+    GetUtils.isEmail(getString(text)) ? null : 'Invalid Email';
+
+Future<Map> getDeviceInfo() async {
+  final deviceInfoPlugin = DeviceInfoPlugin();
+  final deviceInfo = await deviceInfoPlugin.deviceInfo;
+  final map = deviceInfo.toMap();
+  //logInfo(map);
+  return map;
+}
+
+Future<String> getDeviceId() async {
+  final deviceInfo = await DeviceInfoPlugin().deviceInfo;
+  final map = deviceInfo.toMap();
+  return '${map['brand']}...${map['device']}...${map['id']}...${map['androidId']}';
+}
 
 Future<void> validatePermission(
     Permission permission, Function actionToRun) async {
@@ -418,25 +443,174 @@ class MediaManager {
       );
 }
 
-String? requiredValidator(String? text) =>
-    (text == null || text.isEmpty) ? 'Field is required' : null;
+// todo install sqflite package and uncomment code below // u will may need path packages too
+class DBHelper {
+  final String _dbName;
+  late Database _database;
+  Database get database => _database;
 
-String? phoneNumberValidator(String? text) =>
-    GetUtils.isPhoneNumber(getString(text)) ? null : 'Invalid Phone Number';
+  DBHelper._internal(this._dbName);
+  static DBHelper getInstance(String dbName) => DBHelper._internal(dbName);
 
-String? emailValidator(String? text) =>
-    GetUtils.isEmail(getString(text)) ? null : 'Invalid Email';
+  Future<String> getFullDBPathPath() async {
+    var databasesPath = await getDatabasesPath();
+    return join(databasesPath, _dbName);
+  }
 
-Future<Map> getDeviceInfo() async {
-  final deviceInfoPlugin = DeviceInfoPlugin();
-  final deviceInfo = await deviceInfoPlugin.deviceInfo;
-  final map = deviceInfo.toMap();
-  //logInfo(map);
-  return map;
-}
+  Future<void> deleteCurrentDatabase() async {
+    var path = await getFullDBPathPath();
+    await deleteDatabase(path);
+  }
 
-Future<String> getDeviceId() async {
-  final deviceInfo = await DeviceInfoPlugin().deviceInfo;
-  final map = deviceInfo.toMap();
-  return '${map['brand']}...${map['device']}...${map['id']}...${map['androidId']}';
+  Future<Database> getDatabase(
+      {List<String>? sqlQueriesToCreateTables,
+      bool deleteExistingDb = false,
+      int dbVersion = 1}) async {
+    _database = await openDatabase(_dbName, version: dbVersion,
+        onCreate: (Database db, int version) async {
+      if (deleteExistingDb) {
+        await deleteCurrentDatabase();
+      }
+
+      if (sqlQueriesToCreateTables != null) {
+        for (var sql in sqlQueriesToCreateTables) {
+          await db.execute(sql);
+        }
+      }
+    });
+    return _database;
+  }
+
+  Future<int> insert(String tableName, Map<String, dynamic> map) async {
+    return await _database.insert(tableName, map);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllDataFromTable(
+      String tableName) async {
+    return await _database.query(tableName);
+  }
+
+  Future<Map<String, dynamic>?> getSingleDataFromTable(
+      {required String tableName,
+      required String whereColumnName,
+      required Object whereValue}) async {
+    List<Map<String, Object?>> maps = await _database.query(tableName,
+        columns: null, where: '$whereColumnName = ?', whereArgs: [whereValue]);
+    return maps.isNotEmpty ? maps.first : null;
+  }
+
+  Future<int> delete(
+      {required String tableName,
+      required String whereColumnName,
+      required Object whereValue}) async {
+    return await _database.delete(tableName,
+        where: '$whereColumnName = ?', whereArgs: [whereValue]);
+  }
+
+  Future<int> deleteAllFromTable(String tableName) async {
+    return await _database.delete(tableName, where: null);
+  }
+
+  Future<int> update(
+      {required String tableName,
+      required String whereColumnName,
+      required Object whereValue,
+      required Map<String, dynamic> map}) async {
+    return await _database.update(tableName, map,
+        where: '$whereColumnName = ?', whereArgs: [whereValue]);
+  }
+
+  Future<void> close() async {
+    await _database.close();
+  }
+
+// todo check example below to see how to use this class
+/**
+
+    class DBManager {
+    static const String DB_NAME = 'GreatPlace.db';
+    static const String PLACES_TABLE_NAME = 'Places';
+    static const String COLUMN_ID = 'id';
+    static const String COLUMN_TITLE = 'title';
+    static const String COLUMN_LONG = 'longitude';
+    static const String COLUMN_LAT = 'latitude';
+    static final String _sql_create_places_table =
+    'CREATE TABLE $PLACES_TABLE_NAME ($COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, $COLUMN_TITLE TEXT, $COLUMN_LONG REAL, $COLUMN_LAT REAL)';
+
+    // todo run this in app first widget build // in MyApp build
+    static Future<void> initiate() async {
+    try {
+    await DBHelper.getInstance(DB_NAME)
+    .getDatabase(sqlQueriesToCreateTables: [_sql_create_places_table]);
+    } catch (ex) {
+    print(ex);
+    }
+    }
+
+    static Future<bool> insertPlace(PlaceTest placeTest) async {
+    try {
+    return await DBHelper.getInstance(DB_NAME)
+    .insert(PLACES_TABLE_NAME, placeTest.toMap()) >
+    0;
+    } catch (ex) {
+    print(ex);
+    }
+    return false;
+    }
+
+    static Future<PlaceTest?> findPlaceById(int placeTestId) async {
+    try {
+    var map = await DBHelper.getInstance(DB_NAME).getSingleDataFromTable(
+    tableName: PLACES_TABLE_NAME,
+    whereColumnName: COLUMN_ID,
+    whereValue: placeTestId);
+    return map == null ? null : PlaceTest.fromMap(map);
+    } catch (ex) {
+    print(ex);
+    }
+    }
+
+    static Future<List<PlaceTest>?> getAllPlaces() async {
+    try {
+    var map = await DBHelper.getInstance(DB_NAME)
+    .getAllDataFromTable(PLACES_TABLE_NAME);
+    return PlaceTest.parseToGetList(json.encode(map));
+    } catch (ex) {
+    print(ex);
+    }
+    return List.empty();
+    }
+
+    static Future<bool> deletePlace(int placeTestId) async {
+    try {
+    return await DBHelper.getInstance(DB_NAME).delete(
+    tableName: PLACES_TABLE_NAME,
+    whereColumnName: COLUMN_ID,
+    whereValue: placeTestId) >
+    0;
+    } catch (ex) {
+    print(ex);
+    }
+    return false;
+    }
+
+    static Future<bool> updatePlace(
+    int idToUpdate, PlaceTest newPlaceTest) async {
+    try {
+    var map = newPlaceTest.toMap();
+    map.remove(COLUMN_ID);
+    return await DBHelper.getInstance(DB_NAME).update(
+    tableName: PLACES_TABLE_NAME,
+    whereColumnName: COLUMN_ID,
+    whereValue: idToUpdate,
+    map: map) >
+    0;
+    } catch (ex) {
+    print(ex);
+    }
+    return false;
+    }
+    }
+
+ * */
 }

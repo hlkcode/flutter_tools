@@ -10,6 +10,15 @@ const Color kAccentColor = Colors.amber;
 
 const Color kErrorColor = Color(0xCCDC3232);
 const Color kSuccessColor = Color(0xFF78E000);
+const Color kPurpleColor = Color(0xFF6A2055);
+const Color kPurpleLightColor = Color(0xFFEACEDD);
+const kWhiteTextStyle = TextStyle(color: Colors.white, fontSize: 16);
+const kPurpleTextStyle = TextStyle(color: kPurpleColor, fontSize: 16);
+const kBlackTextStyle = TextStyle(color: Colors.black, fontSize: 16);
+final purpleBorder = OutlineInputBorder(
+  borderRadius: BorderRadius.circular(6),
+  borderSide: const BorderSide(color: kPurpleColor),
+);
 
 Future<bool> initStorage([String container = 'GetStorage']) async =>
     await GetStorage.init(container);

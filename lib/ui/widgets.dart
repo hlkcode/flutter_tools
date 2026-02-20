@@ -1148,3 +1148,393 @@ class NoItemLoader extends StatelessWidget {
     );
   }
 }
+
+///
+class DropDownSelector extends StatelessWidget {
+  DropDownSelector({
+    super.key,
+    required this.list,
+    required this.onSelectionChange,
+    required this.instruction,
+    this.inputDecoration,
+    this.selectedIndex = -1,
+  });
+
+  final List<String> list;
+  final Function(String? newValue) onSelectionChange;
+  final String instruction;
+  final int selectedIndex;
+  final RxString _selected = ''.obs;
+  final InputDecoration? inputDecoration;
+
+  @override
+  Widget build(BuildContext context) {
+    _selected.value = selectedIndex == -1 ? '' : list[selectedIndex];
+    return Obx(() => DropdownButtonFormField<String>(
+          decoration: inputDecoration ?? InputDecoration(border: purpleBorder),
+          isExpanded: true,
+          hint: Align(
+            child: Text(
+              getString(GetUtils.capitalize(instruction)),
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+          validator: requiredValidator,
+          items: list.map((String value) {
+            return DropdownMenuItem<String>(
+              alignment: AlignmentDirectional.center,
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (newVal) {
+            _selected.value = getString(newVal);
+            onSelectionChange(newVal);
+          },
+          value: _selected.isEmpty ? null : _selected.value,
+        ));
+  }
+}
+
+class RowPair extends StatelessWidget {
+  final String title;
+  final String value;
+  const RowPair({
+    super.key,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title),
+        Text(value),
+      ],
+    );
+  }
+}
+
+class SelectableCard extends StatelessWidget {
+  final bool showSelection;
+  final bool isSelected;
+  final Function(bool?)? onSelectionChanged;
+  final Function()? onSelected;
+  final String cardTitle;
+  final String actionText;
+  final Map<String, String> rows;
+  const SelectableCard({
+    super.key,
+    required this.showSelection,
+    this.onSelectionChanged,
+    required this.isSelected,
+    required this.cardTitle,
+    required this.rows,
+    this.actionText = '',
+    this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    var showAction = actionText.isNotEmpty;
+    var mainContent = Card(
+      elevation: 0.0,
+      color: Colors.white54,
+      child: Column(
+        // spacing: getHeight(0.01),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            cardTitle,
+            style: kBlackTextStyle.copyWith(fontWeight: FontWeight.bold),
+          ),
+          ...rows.entries
+              .map((entry) => RowPair(title: entry.key, value: entry.value)),
+          verticalSpace(0.01),
+          if (showAction)
+            LoadingButton(
+              btnMargin: EdgeInsets.zero,
+              // buttonHeight: getHeight(0.04),
+              buttonHeight: 36,
+              text: actionText,
+              isOutlined: true,
+              isLoading: false,
+              buttonColor: kPurpleColor,
+              style: kPurpleTextStyle,
+              buttonRadius: 12,
+              onTapped: onSelected,
+            ),
+        ],
+      ).paddingAll(12),
+    );
+    return showSelection
+        ? Row(
+            children: [
+              Checkbox(
+                value: isSelected,
+                onChanged: onSelectionChanged,
+              ),
+              Expanded(child: mainContent),
+            ],
+          )
+        : mainContent;
+  }
+}
+
+class LabeledSwitch extends StatelessWidget {
+  final String title;
+  final String? switchTitle;
+  final String? switchSubTitle;
+  final RxBool currentValue;
+
+  final Function(bool newValue)? onChange;
+
+  const LabeledSwitch({
+    super.key,
+    required this.title,
+    this.switchSubTitle,
+    this.switchTitle,
+    this.onChange,
+    required this.currentValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LabeledWidget(
+      title: title,
+      widget: Obx(
+        () => SwitchListTile(
+          // tileColor: Colors.red,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: kPurpleColor),
+              borderRadius: BorderRadius.circular(8)),
+          activeColor: kPurpleColor,
+          title: switchTitle != null ? Text(switchTitle!) : null,
+          subtitle: switchSubTitle != null ? Text(switchSubTitle!) : null,
+          // const Text('Is Property managed'),
+          // subtitle:
+          //     const Text('Are you managing this property for a third party ?'),
+          value: currentValue.value,
+          onChanged: (bool? value) {
+            currentValue.value = value ?? false;
+            if (onChange != null) onChange!(value ?? false);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class LabeledSelector extends StatelessWidget {
+  final String title;
+  final List<String> options;
+  final String instruction;
+  final Function(String? newValue) onSelectionChange;
+  final InputDecoration? decoration;
+  final int? selectedIndex;
+  const LabeledSelector({
+    super.key,
+    required this.title,
+    required this.options,
+    required this.instruction,
+    required this.onSelectionChange,
+    this.decoration,
+    this.selectedIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LabeledWidget(
+      title: title,
+      widget: DropDownSelector(
+        selectedIndex: selectedIndex ?? -1,
+        list: options,
+        onSelectionChange: onSelectionChange,
+        instruction: instruction,
+        inputDecoration: decoration,
+      ),
+    );
+  }
+}
+
+class LabeledTextField extends StatelessWidget {
+  final String title;
+  final TextEditingController? controller;
+  final TextInputType? inputType;
+  final bool readOnly;
+  final String? Function(String? value)? validator;
+  const LabeledTextField(
+      {super.key,
+      required this.title,
+      this.validator,
+      this.controller,
+      this.inputType,
+      this.readOnly = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return LabeledWidget(
+      title: title,
+      widget: TextFormField(
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          enabledBorder: purpleBorder,
+          focusedBorder: purpleBorder,
+          border: purpleBorder,
+        ),
+        validator: validator,
+        controller: controller,
+        keyboardType: inputType,
+      ),
+    );
+  }
+}
+
+class LabeledWidget extends StatelessWidget {
+  final String title;
+  final Widget widget;
+  final bool isVertical;
+  const LabeledWidget({
+    super.key,
+    required this.title,
+    required this.widget,
+    this.isVertical = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return isVertical
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: kPurpleTextStyle),
+              widget,
+            ],
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            // crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              widget,
+              Text(title, style: kPurpleTextStyle),
+            ],
+          );
+  }
+}
+
+class SelectableListPage extends StatelessWidget {
+  final String cardFor;
+  final String cardActionText;
+  final String submitText;
+  final List<Map<String, String>> rowsList;
+  final List dataList;
+  final RxBool loading;
+  final bool reversed;
+  final Function(bool?)? onSelectionChanged;
+  final Function(RxList<int> selectedIndexes)? onSelectedSubmit;
+  final Function()? onSelected;
+
+  SelectableListPage({
+    super.key,
+    required this.cardFor,
+    required this.cardActionText,
+    required this.rowsList,
+    required this.dataList,
+    required this.submitText,
+    required this.loading,
+    this.onSelectedSubmit,
+    this.onSelected,
+    this.onSelectionChanged,
+    this.reversed = false,
+  });
+
+  final RxList<int> _selectedIndexes = <int>[].obs;
+
+  @override
+  Widget build(BuildContext context) {
+    var list = ListView.separated(
+      itemCount: dataList.length,
+      itemBuilder: (ctx, index) {
+        var rowData = rowsList[index];
+        var title = reversed
+            ? '$cardFor #${dataList.length - index}'
+            : '$cardFor #${index + 1}';
+        return Obx(() => SelectableCard(
+              actionText: cardActionText,
+              showSelection: _selectedIndexes.isNotEmpty,
+              isSelected: _selectedIndexes.contains(index),
+              cardTitle: title,
+              rows: rowData,
+              onSelected: onSelected,
+              onSelectionChanged: onSelectionChanged,
+            ));
+      },
+      separatorBuilder: (BuildContext context, int index) =>
+          verticalSpace(0.008),
+    );
+    return Container(
+      color: kPurpleLightColor.withOpacity(.2),
+      child: Obx(
+        () => _selectedIndexes.isEmpty
+            ? list
+            : Column(
+                // spacing: getHeight(0.008),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // verticalSpace(0.002),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => _selectedIndexes.clear(),
+                        icon: Icon(Icons.cancel_outlined, size: 32),
+                      ),
+                      Text(
+                        '${_selectedIndexes.length} Selected',
+                        style: kPurpleTextStyle,
+                        // style: kBlackTextStyle,
+                      ),
+                      SizedBox(
+                        width: 110,
+                        child: Obx(() => LoadingButton(
+                              // btnMargin: EdgeInsets.zero,
+                              // buttonHeight: getHeight(0.04),
+                              buttonHeight: 36,
+                              text: submitText,
+                              // isOutlined: true,
+                              style: kWhiteTextStyle,
+                              isLoading: loading.value,
+                              buttonColor: kPurpleColor,
+                              buttonRadius: 12,
+                              onTapped: () {
+                                // if (onSubmit != null) onSubmit!();
+                                if (onSelectedSubmit != null) {
+                                  onSelectedSubmit!(_selectedIndexes);
+                                }
+                              },
+                            )),
+                      ),
+                    ],
+                  ),
+                  LabeledWidget(
+                    title: 'Select All',
+                    isVertical: false,
+                    widget: Checkbox(
+                      value: _selectedIndexes.length == dataList.length,
+                      onChanged: (sel) {
+                        var limit = dataList.length;
+                        _selectedIndexes.value =
+                            List<int>.generate(limit, (i) => i);
+                      },
+                    ),
+                  ),
+                  Expanded(child: list)
+                ],
+              ),
+      ).marginAll(10),
+    );
+  }
+}
